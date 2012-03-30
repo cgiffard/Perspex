@@ -25,8 +25,97 @@ window.addEventListener("load",function(EventData) {
 	canvas.height = height;
 	
 	// Local tracking for camera
-	var cameraX = -900, cameraY = 0, cameraZ = -1300;
-	var crotX = 0.4, crotY = 0.2, crotZ = 0.1;
+	var cameraX = -1300, cameraY = 0, cameraZ = -1300;
+	var crotX = 0.4, crotY = 0.2, crotZ = 0;
+	
+	var toolbar = document.createElement("div");
+	toolbar.style.backgroundColor = "#333";
+	toolbar.style.color = "white";
+	toolbar.style.height = "30px";
+	toolbar.style.width = "100%";
+	toolbar.style.position = "absolute";
+	toolbar.style.bottom = "0px";
+	toolbar.style.left = "0px";
+	toolbar.style.fontFamily = "sans-serif";
+	toolbar.style.lineHeight = "30px";
+	
+	toolbar.innerHTML = "CameraX: <input camerax value='" + cameraX + "' style='background-color: #555; color: white; border: solid #999 1px; width: 40px;'/>";
+	toolbar.innerHTML += " CameraY: <input cameray value='" + cameraY + "' style='background-color: #555; color: white; border: solid #999 1px; width: 40px;'/>";
+	toolbar.innerHTML += " CameraZ: <input cameraz value='" + cameraZ + "' style='background-color: #555; color: white; border: solid #999 1px; width: 40px;'/>";
+	
+	toolbar.innerHTML += "rotX: <input rotx value='" + crotX + "' style='background-color: #555; color: white; border: solid #999 1px; width: 40px;'/>";
+	toolbar.innerHTML += "rotY: <input roty value='" + crotY + "' style='background-color: #555; color: white; border: solid #999 1px; width: 40px;'/>";
+	toolbar.innerHTML += "rotZ: <input rotz value='" + crotZ + "' style='background-color: #555; color: white; border: solid #999 1px; width: 40px;'/>";
+	
+	document.body.appendChild(toolbar);
+	
+	var xinput = _q("[camerax]")[0],
+		yinput = _q("[cameray]")[0],
+		zinput = _q("[cameraz]")[0],
+		rxinput = _q("[rotx]")[0],
+		ryinput = _q("[rotz]")[0],
+		rzinput = _q("[roty]")[0];
+	
+	xinput.addEventListener("keydown",function(event) {
+		if (event.keyCode === 38) {
+			cameraX += 10;
+			xinput.value = cameraX;
+		}
+		
+		if (event.keyCode === 40) {
+			cameraX -= 10;
+			xinput.value = cameraX;
+		}
+		
+		camera.setPosition(cameraX, cameraY, cameraZ);
+		runProjection();
+		
+	});
+	
+	yinput.addEventListener("keydown",function(event) {
+		if (event.keyCode === 38) {
+			cameraY += 10;
+			yinput.value = cameraY;
+		}
+		
+		if (event.keyCode === 40) {
+			cameraY -= 10;
+			yinput.value = cameraY;
+		}
+		
+		camera.setPosition(cameraX, cameraY, cameraZ);
+		runProjection();
+		
+	});
+	
+	zinput.addEventListener("keydown",function(event) {
+		if (event.keyCode === 38) {
+			cameraZ += 10;
+			zinput.value = cameraZ;
+		}
+		
+		if (event.keyCode === 40) {
+			cameraZ -= 10;
+			zinput.value = cameraZ;
+		}
+		
+		camera.setPosition(cameraX, cameraY, cameraZ);
+		runProjection();
+	});
+	
+	var chgFunc = function() {
+		cameraX = parseFloat(xinput.value);
+		cameraY = parseFloat(yinput.value);
+		cameraZ = parseFloat(zinput.value);
+		
+		camera.setPosition(cameraX, cameraY, cameraZ);
+		runProjection();
+	};
+	
+	xinput.addEventListener("change",chgFunc);
+	yinput.addEventListener("change",chgFunc);
+	zinput.addEventListener("change",chgFunc);
+	
 	
 	// Set up camera and projection
 	var camera		= new perspex.Camera(cameraX,cameraY,cameraZ,crotX,crotY,crotZ,width,height,-2000),
@@ -35,23 +124,42 @@ window.addEventListener("load",function(EventData) {
 	// Listening for mouse events
 	canvas.addEventListener("mousemove",function(eventData) {
 		var cX = canvas.width - eventData.clientX, cY = eventData.clientY;
-		crotY = 0.2 - (0.2 - (cX / canvas.width)*0.4)
-		crotX = 0.4 - (0.2 - (cY / canvas.height)*0.4)
+		crotY = 0.5 - (0.2 - (cX / canvas.width)*0.4)
+		crotX = 0.2 - (0.2 - (cY / canvas.height)*0.4)
+		
+		rxinput.value = crotX;
+		ryinput.value = crotY;
+		rzinput.value = crotZ;
 		
 		camera.setRotation(crotX, crotY, crotZ);
+		runProjection();
 	});
 	
 	var cubes = [];
-	for (var c = 0; c < 20; c++) {
+	// for (var x = -300; x < 300; x += 50) {
+	// 	for (var y = -300; y < 300; y += 50) {
+	// 		for (var z = -300; z < 300; z += 50) {
+	// 			cubes.push(new Cube(20,projection));
+	// 			cubes[cubes.length-1].x = x;
+	// 			cubes[cubes.length-1].y = y;
+	// 			cubes[cubes.length-1].z = z;
+	// 			cubes[cubes.length-1].hue = Math.ceil((360/(200*200*200))*(x*y*z));
+	// 		}
+	// 	}
+	// }
+	
+	
+	for (var c = 0; c < 100; c ++) {
 		cubes.push(new Cube(20+Math.ceil(Math.random()*100),projection));
-		cubes[cubes.length-1].hue = Math.ceil((360/20)*c);
+		cubes[cubes.length-1].hue = (360/100) * c;
 	}
 	
 	function setPositions() {
 		cubes.forEach(function(cube) {
-			cube.x = Math.floor(-100+Math.random()*200);
-			cube.y = Math.floor(-100+Math.random()*200);
-			cube.z = Math.floor(-100+Math.random()*200);
+			cube.size = 20+Math.ceil(Math.random()*100);
+			cube.x = Math.floor(-500+Math.random()*1000);
+			cube.y = Math.floor(-500+Math.random()*1000);
+			cube.z = Math.floor(-500+Math.random()*1000);
 			cube.axis = ['x','y','z'][Math.floor(Math.random()*3)];
 			cube.direction = [-1,+1][Math.floor(Math.random()*2)];
 			cube.speed = Math.random()*4;
@@ -63,6 +171,37 @@ window.addEventListener("load",function(EventData) {
 	function runProjection() {
 		// Reset display surface
 		canvas.width = width;
+		
+		// Much easier if we draw our axes
+	    // draw the x-axis
+	    context.strokeStyle = '#FF0000';
+	    context.beginPath();
+	    context.moveTo.apply(context, projection.project(0, 0, 0));
+	    context.lineTo.apply(context, projection.project(500, 0, 0));
+	    context.closePath();
+	    context.stroke();
+    
+	    // draw the y-axis
+	    context.strokeStyle = '#00FF00';
+	    context.beginPath();
+	    context.moveTo.apply(context, projection.project(0, 0, 0));
+	    context.lineTo.apply(context, projection.project(0, 500, 0));
+	    context.closePath();
+	    context.stroke();
+    
+	    // draw the z-axis
+	    context.strokeStyle = '#0000FF';
+	    context.beginPath();
+	    context.moveTo.apply(context, projection.project(0, 0, 0));
+	    context.lineTo.apply(context, projection.project(0, 0, 500));
+	    context.lineTo.apply(context, projection.project(500, 0, 500));
+	    context.stroke();
+		
+		context.fillText.apply(context, ["0,0,0"].concat(projection.project(0, 0, 0)));
+		context.fillText.apply(context, ["500X"].concat(projection.project(500, 0, 0)));
+		context.fillText.apply(context, ["500Y"].concat(projection.project(0, 500, 0)));
+		context.fillText.apply(context, ["500Z"].concat(projection.project(0, 0, 500)));
+		context.fillText.apply(context, ["500XYZ"].concat(projection.project(500, 500, 500)));
 		
 		// Create storage for faces
 		var faces = [];
@@ -111,12 +250,12 @@ window.addEventListener("load",function(EventData) {
 						crossProduct.dy * cameraVector.dy + 
 						crossProduct.dz * cameraVector.dz;
 			
-			return 1 || dp < 0;
+			return dp < 0;
 		});
 		
 		// Draw faces
 		faces.forEach(function(face) {
-			context.fillStyle = "hsla(" + (face.cube.hue || 0) + ",100%,50%,1)";
+			context.fillStyle = "hsla(" + (face.cube.hue || 0) + ",100%,50%,0.5)";
 			
 			context.beginPath();
 			context.moveTo.apply(context,projection.project(face.points[0].x,face.points[0].y,face.points[0].z));
@@ -129,13 +268,13 @@ window.addEventListener("load",function(EventData) {
 		});
 		
 		// Hopefully that's safe for the near future
-		if (webkitRequestAnimationFrame)	window.webkitRequestAnimationFrame(runProjection,canvas);
-		if (msieRequestAnimationFrame)		window.msieRequestAnimationFrame(runProjection,canvas);
-		if (mozRequestAnimationFrame)		window.mozRequestAnimationFrame(runProjection,canvas);
-		if (oRequestAnimationFrame) 		window.oRequestAnimationFrame(runProjection,canvas);
-		if (requestAnimationFrame)			window.requestAnimationFrame(runProjection,canvas);
+		//if (webkitRequestAnimationFrame)	window.webkitRequestAnimationFrame(runProjection,canvas);
+		//if (msieRequestAnimationFrame)		window.msieRequestAnimationFrame(runProjection,canvas);
+		//if (mozRequestAnimationFrame)		window.mozRequestAnimationFrame(runProjection,canvas);
+		//if (oRequestAnimationFrame) 		window.oRequestAnimationFrame(runProjection,canvas);
+		//if (requestAnimationFrame)			window.requestAnimationFrame(runProjection,canvas);
 	}
-	
+	window.setInterval(runProjection,33);
 	setPositions();
 	runProjection();
 },false);
