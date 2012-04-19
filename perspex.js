@@ -2,7 +2,7 @@
 // ────────────────────────────────────────────────────────────────────────────────────────
 // Perspective Projection Math Helpers
 // ────────────────────────────────────────────────────────────────────────────────────────
-// Structure flogged ungratefully from isomath
+// Structure flogged ungratefully from DamonOehlman/isomath
 
 (function (glob) {
 	// There's a lot we can do to improve the performance still (such as precaching Math.* calls.)
@@ -49,6 +49,26 @@
 			this.eX = eX && !isNaN(eX) ? eX : 0;
 			this.eY = eY && !isNaN(eY) ? eY : 0;
 			this.eZ = eZ && !isNaN(eZ) ? eZ : 0;
+		},
+		
+		// Finds the camera vector based on its location and rotation.
+		getVector: function() {
+			var radConvert = (Math.PI / 180),
+				angleX = this.Θx * radConvert,
+				angleY = this.Θy * radConvert,
+				angleZ = this.Θz * radConvert
+				x = this.cX,
+				y = this.cY,
+				z = this.cZ;
+			
+			y = y * Math.cos(angleX) - z * Math.sin(angleX);
+			z = y * Math.sin(angleX) + z * Math.cos(angleX);
+			z = z * Math.cos(angleY) - x * Math.sin(angleY);
+			x = z * Math.sin(angleY) + x * Math.cos(angleY);
+			x = x * Math.cos(angleZ) - y * Math.sin(angleZ);
+			y = x * Math.sin(angleZ) + y * Math.cos(angleZ);
+			
+			return [x,y,z];
 		}
 	};
 	
@@ -62,6 +82,9 @@
 	}
 	
 	Projection.prototype = {
+		
+		// Generates a 2D coordinate (in array form) from a 3D coordinate,
+		// accommodating for camera position, view depth, and 3D rotation (represented by Θ)
 		
 		project: function(aX, aY, aZ) {
 			var dX, dY, dZ; // Destination
@@ -82,6 +105,88 @@
             }
 			
 			return [bX, bY];
+		},
+		
+		// Determines whether a polygon should be drawn (it is on the screen
+		// and in front of the camera)
+		// Takes an array of points, and render area dimensions.
+		
+		shouldDrawPolygon: function(pointArray,viewWidth,viewHeight) {
+			// At least one part of the polygon projects to the display surface.
+			if (this.onscreen(pointArray,viewWidth,viewHeight)) {
+				var surfaceNormal = this.findNormal(pointArray),
+					cameraVector = this.camera.getVector();
+					
+				cameraVector[2] -= this.camera.eZ;
+				
+				var polygonAverage = [
+					pointArray.reduce(function(prev,current){ return prev + current[0]; },0) / pointArray.length,
+					pointArray.reduce(function(prev,current){ return prev + current[1]; },0) / pointArray.length,
+					pointArray.reduce(function(prev,current){ return prev + current[2]; },0) / pointArray.length
+				];
+				
+				var polygonCameraVector = [
+					polygonAverage[0] + cameraVector[0],
+					polygonAverage[1] + cameraVector[1],
+					polygonAverage[2] + cameraVector[2],
+				];
+				
+				var dotProduct =
+					(polygonCameraVector[0] * surfaceNormal[0]) + 
+					(polygonCameraVector[1] * surfaceNormal[1]) + 
+					(polygonCameraVector[2] * surfaceNormal[2]);
+				
+				if (dotProduct < 0) return false;
+				
+				// Or, if we're positive... return true.
+				return true;
+			}
+			
+			return false;
+		},
+		
+		// Determines, from an array of points and the render area dimensions,
+		// whether a polygon will appear in the view area and should be drawn.
+		
+		onscreen: function(pointArray,viewWidth,viewHeight) {
+			for (var pIndex = 0; pIndex < pointArray.length; pIndex ++) {
+				var projectedPoint = this.project.apply(this,pointArray[pIndex]);
+				
+				if (projectedPoint[0] >= 0 && projectedPoint[0] <= viewWidth &&
+					projectedPoint[1] >= 0 && projectedPoint[1] <= viewHeight) {
+					
+					return true;
+				}
+			}
+			
+			return false;
+		},
+		
+		// Determines the surface normal of a simple convex polygon
+		// (triangle or non-weird quadrilateral) from an array of its points.
+		
+		findNormal: function(pointArray) {
+			if (pointArray.length < 3) throw new Error("Can't find normal of a surface with less than three points.");
+			
+			// Shamelessly ripped of Marius Gundersen's 2011 ongamestart talk
+			var vector1 = {
+				dx: pointArray[0][0] - pointArray[1][0],
+				dy: pointArray[0][1] - pointArray[1][1],
+				dz: pointArray[0][2] - pointArray[1][2]
+			};
+			
+			var vector2 = {
+				dx: pointArray[2][0] - pointArray[1][0],
+				dy: pointArray[2][1] - pointArray[1][1],
+				dz: pointArray[2][2] - pointArray[1][2]
+			};
+			
+			// Return cross-product
+			return [
+				vector1.dy * vector2.dz - vector1.dz * vector2.dy,
+				vector1.dz * vector2.dx - vector1.dx * vector2.dz,
+				vector1.dx * vector2.dy - vector1.dy * vector2.dx
+			];
 		}
 	};
 	
