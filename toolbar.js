@@ -7,16 +7,19 @@
 			self.events = {"update":function(){}};
 			self.boundCamera = camera;
 			self.toolbar = document.createElement("div");
-			self.toolbar.style.position = "absolute";
-			self.toolbar.style.bottom = "0px";
-			self.toolbar.style.left = "0px";
-			self.toolbar.style.height = "30px";
-			self.toolbar.style.backgroundColor = "rgba(0,0,0,0.8)";
-			self.toolbar.style.color = "white";
-			self.toolbar.style.fontFamily = "sans-serif";
-			self.toolbar.style.fontSize = "0.6em";
-			self.toolbar.style.lineHeight = "30px";
-			self.toolbar.style.width = "100%";
+			
+			with (self.toolbar.style) {
+				position		 = "absolute";
+				bottom			 = "0px";
+				left			 = "0px";
+				height			 = "30px";
+				backgroundColor	 = "rgba(0,0,0,0.8)";
+				color			 = "white";
+				fontFamily		 = "sans-serif";
+				fontSize		 = "0.6em";
+				lineHeight		 = "30px";
+				width			 = "100%";
+			}
 			
 			var controls = [];
 			var cameraProperties = [
@@ -45,19 +48,26 @@
 				tmpControlInput.value = self.boundCamera[property[0]];
 				tmpControlInput.step = "0.01";
 				tmpControlInput.id = "camval" + property[0];
-				tmpControlInput.style.backgroundColor = "transparent";
-				tmpControlInput.style.border = "solid white 1px";
-				tmpControlInput.style.color = "white";
-				tmpControlInput.style.width = "60px";
-				tmpControlInput.style.marginLeft = "5px";
+				
+				with (tmpControlInput.style) {
+					backgroundColor	= "transparent";
+					border			= "solid white 1px";
+					color			= "white";
+					width			= "60px";
+					marginLeft		= "5px";
+				}
 				
 				tmpControlLabel.innerHTML = property[1];
 				tmpControlLabel.for = "camval" + property[0];
 				
-				tmpControlInput.addEventListener("change",function(event) {
+				function updateCamera() {
 					self.boundCamera[property[0]] = parseFloat(tmpControlInput.value);
 					self.events.update();
-				});
+				}
+				
+				tmpControlInput.addEventListener("change",updateCamera,false);
+				tmpControlInput.addEventListener("keydown",updateCamera,false);
+				tmpControlInput.addEventListener("keyup",updateCamera,false);
 				
 				tmpControlGroup.appendChild(tmpControlLabel);
 				tmpControlGroup.appendChild(tmpControlInput);

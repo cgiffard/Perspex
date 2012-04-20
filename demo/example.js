@@ -25,134 +25,33 @@ window.addEventListener("load",function(EventData) {
 	canvas.height = height;
 	
 	// Local tracking for camera
-	var cameraX = -1300, cameraY = 0, cameraZ = -1300;
-	var crotX = 0.4, crotY = 0.2, crotZ = 0;
-	
-	var toolbar = document.createElement("div");
-	toolbar.style.backgroundColor = "#333";
-	toolbar.style.color = "white";
-	toolbar.style.height = "30px";
-	toolbar.style.width = "100%";
-	toolbar.style.position = "absolute";
-	toolbar.style.bottom = "0px";
-	toolbar.style.left = "0px";
-	toolbar.style.fontFamily = "sans-serif";
-	toolbar.style.lineHeight = "30px";
-	
-	toolbar.innerHTML = "CameraX: <input camerax value='" + cameraX + "' style='background-color: #555; color: white; border: solid #999 1px; width: 40px;'/>";
-	toolbar.innerHTML += " CameraY: <input cameray value='" + cameraY + "' style='background-color: #555; color: white; border: solid #999 1px; width: 40px;'/>";
-	toolbar.innerHTML += " CameraZ: <input cameraz value='" + cameraZ + "' style='background-color: #555; color: white; border: solid #999 1px; width: 40px;'/>";
-	
-	toolbar.innerHTML += "rotX: <input rotx value='" + crotX + "' style='background-color: #555; color: white; border: solid #999 1px; width: 40px;'/>";
-	toolbar.innerHTML += "rotY: <input roty value='" + crotY + "' style='background-color: #555; color: white; border: solid #999 1px; width: 40px;'/>";
-	toolbar.innerHTML += "rotZ: <input rotz value='" + crotZ + "' style='background-color: #555; color: white; border: solid #999 1px; width: 40px;'/>";
-	
-	document.body.appendChild(toolbar);
-	
-	var xinput = _q("[camerax]")[0],
-		yinput = _q("[cameray]")[0],
-		zinput = _q("[cameraz]")[0],
-		rxinput = _q("[rotx]")[0],
-		ryinput = _q("[rotz]")[0],
-		rzinput = _q("[roty]")[0];
-	
-	xinput.addEventListener("keydown",function(event) {
-		if (event.keyCode === 38) {
-			cameraX += 10;
-			xinput.value = cameraX;
-		}
+	var cameraX = -100,
+		cameraY = 100,
+		cameraZ = -100
+		crotX = 0,
+		crotY = -1,
+		crotZ = -0.5,
+		pupilWidth = width,
+		pupilHeight = height,
+		fieldOfView = 60, // 60 degrees
+		viewDepth = (Math.tan(fieldOfView * (Math.PI/180)) * (pupilWidth/2));
 		
-		if (event.keyCode === 40) {
-			cameraX -= 10;
-			xinput.value = cameraX;
-		}
-		
-		camera.setPosition(cameraX, cameraY, cameraZ);
-		runProjection();
-		
-	});
-	
-	yinput.addEventListener("keydown",function(event) {
-		if (event.keyCode === 38) {
-			cameraY += 10;
-			yinput.value = cameraY;
-		}
-		
-		if (event.keyCode === 40) {
-			cameraY -= 10;
-			yinput.value = cameraY;
-		}
-		
-		camera.setPosition(cameraX, cameraY, cameraZ);
-		runProjection();
-		
-	});
-	
-	zinput.addEventListener("keydown",function(event) {
-		if (event.keyCode === 38) {
-			cameraZ += 10;
-			zinput.value = cameraZ;
-		}
-		
-		if (event.keyCode === 40) {
-			cameraZ -= 10;
-			zinput.value = cameraZ;
-		}
-		
-		camera.setPosition(cameraX, cameraY, cameraZ);
-		runProjection();
-	});
-	
-	var chgFunc = function() {
-		cameraX = parseFloat(xinput.value);
-		cameraY = parseFloat(yinput.value);
-		cameraZ = parseFloat(zinput.value);
-		
-		camera.setPosition(cameraX, cameraY, cameraZ);
-		runProjection();
-	};
-	
-	xinput.addEventListener("change",chgFunc);
-	yinput.addEventListener("change",chgFunc);
-	zinput.addEventListener("change",chgFunc);
-	
 	
 	// Set up camera and projection
-	var camera		= new perspex.Camera(cameraX,cameraY,cameraZ,crotX,crotY,crotZ,width,height,-2000),
+	var camera		= new perspex.Camera(cameraX,cameraY,cameraZ,crotX,crotY,crotZ,pupilWidth,pupilHeight,viewDepth),
 		projection	= perspex(camera,{ clamp: false });
 	
-	// Listening for mouse events
-	canvas.addEventListener("mousemove",function(eventData) {
-		var cX = canvas.width - eventData.clientX, cY = eventData.clientY;
-		crotY = 0.5 - (0.2 - (cX / canvas.width)*0.4)
-		crotX = 0.2 - (0.2 - (cY / canvas.height)*0.4)
-		
-		rxinput.value = crotX;
-		ryinput.value = crotY;
-		rzinput.value = crotZ;
-		
-		camera.setRotation(crotX, crotY, crotZ);
-		runProjection();
-	});
+	var cameraToolbar = new PerspexToolbar(camera);
+		cameraToolbar.appendTo(document.body);
+		cameraToolbar.on("update",runProjection);
+	
 	
 	var cubes = [];
-	// for (var x = -300; x < 300; x += 50) {
-	// 	for (var y = -300; y < 300; y += 50) {
-	// 		for (var z = -300; z < 300; z += 50) {
-	// 			cubes.push(new Cube(20,projection));
-	// 			cubes[cubes.length-1].x = x;
-	// 			cubes[cubes.length-1].y = y;
-	// 			cubes[cubes.length-1].z = z;
-	// 			cubes[cubes.length-1].hue = Math.ceil((360/(200*200*200))*(x*y*z));
-	// 		}
+	
+	// for (var c = 0; c < 100; c ++) {
+	// 		cubes.push(new Cube(20+Math.ceil(Math.random()*100),projection));
+	// 		cubes[cubes.length-1].hue = (360/100) * c;
 	// 	}
-	// }
-	
-	
-	for (var c = 0; c < 100; c ++) {
-		cubes.push(new Cube(20+Math.ceil(Math.random()*100),projection));
-		cubes[cubes.length-1].hue = (360/100) * c;
-	}
 	
 	function setPositions() {
 		cubes.forEach(function(cube) {
@@ -172,30 +71,41 @@ window.addEventListener("load",function(EventData) {
 		// Reset display surface
 		canvas.width = width;
 		
+		canvas.lineWidth = 3;
+		
 		// Much easier if we draw our axes
 	    // draw the x-axis
-	    context.strokeStyle = '#FF0000';
-	    context.beginPath();
-	    context.moveTo.apply(context, projection.project(0, 0, 0));
-	    context.lineTo.apply(context, projection.project(500, 0, 0));
-	    context.closePath();
-	    context.stroke();
-    
-	    // draw the y-axis
-	    context.strokeStyle = '#00FF00';
-	    context.beginPath();
-	    context.moveTo.apply(context, projection.project(0, 0, 0));
-	    context.lineTo.apply(context, projection.project(0, 500, 0));
-	    context.closePath();
-	    context.stroke();
-    
-	    // draw the z-axis
-	    context.strokeStyle = '#0000FF';
-	    context.beginPath();
-	    context.moveTo.apply(context, projection.project(0, 0, 0));
-	    context.lineTo.apply(context, projection.project(0, 0, 500));
-	    context.lineTo.apply(context, projection.project(500, 0, 500));
-	    context.stroke();
+		if (projection.shouldDrawPolygon([[0,0,0],[500,0,0],[0,0,0]]) || 1) {
+		    context.strokeStyle = '#FF0000';
+		    context.beginPath();
+		    context.moveTo.apply(context, projection.project(0, 0, 0));
+		    context.lineTo.apply(context, projection.project(500, 0, 0));
+		    context.closePath();
+		    context.stroke();
+		}
+    	
+		if (projection.shouldDrawPolygon([[0,0,0],[0,500,0],[0,0,0]]) || 1) {
+		    // draw the y-axis
+		    context.strokeStyle = '#00FF00';
+		    context.beginPath();
+		    context.moveTo.apply(context, projection.project(0, 0, 0));
+		    context.lineTo.apply(context, projection.project(0, 500, 0));
+		    context.closePath();
+		    context.stroke();
+		}
+    	
+		if (projection.shouldDrawPolygon([[0,0,0],[0,0,500],[0,0,0]]) || 1) {
+			// draw the z-axis
+		    context.strokeStyle = '#0000FF';
+		    context.beginPath();
+		    context.moveTo.apply(context, projection.project(0, 0, 0));
+		    context.lineTo.apply(context, projection.project(0, 0, 500));
+			
+			if (projection.shouldDrawPolygon([[0,0,0],[500,0,500],[0,0,0]])) {
+			    context.lineTo.apply(context, projection.project(500, 0, 500));
+			}
+		    context.stroke();
+		}
 		
 		context.fillText.apply(context, ["0,0,0"].concat(projection.project(0, 0, 0)));
 		context.fillText.apply(context, ["500X"].concat(projection.project(500, 0, 0)));
@@ -210,6 +120,10 @@ window.addEventListener("load",function(EventData) {
 		cubes.forEach(function(cube) {
 			cube[cube.axis] += cube.direction * cube.speed;
 			faces = faces.concat(cube.faces());
+		});
+		
+		faces = faces.filter(function(face) {
+			return projection.shouldDrawPolygon(face.points);
 		});
 		
 		// Sort by distance from camera
@@ -228,43 +142,17 @@ window.addEventListener("load",function(EventData) {
 			return (faceb.averagePosition - cameraPosition) - (facea.averagePosition - cameraPosition);
 		});
 		
-		// Cull backfaces
-		faces = faces.filter(function(face) {
-			var vec1 = {dx: face.points[0].x - face.points[1].x,
-						dy: face.points[0].y - face.points[1].y,
-						dz: face.points[0].z - face.points[1].z};
-			
-			var vec2 = {dx: face.points[2].x - face.points[1].x,
-						dy: face.points[2].y - face.points[1].y,
-						dz: face.points[2].z - face.points[1].z};
-			
-			var crossProduct = {dx: vec1.dy * vec2.dz - vec1.dz * vec2.dy,
-								dy: vec1.dz * vec2.dx - vec1.dx * vec2.dz,
-								dz: vec1.dx * vec2.dy - vec1.dy * vec2.dx};
-			
-			var cameraVector = {dx: cameraX - (face.points[0].x + face.points[1].x + face.points[2].x) / 3,
-								dy: cameraY - (face.points[0].y + face.points[1].y + face.points[2].y) / 3,
-								dz: cameraZ - (face.points[0].z + face.points[1].z + face.points[2].z) / 3}
-			
-			var dp =	crossProduct.dx * cameraVector.dx + 
-						crossProduct.dy * cameraVector.dy + 
-						crossProduct.dz * cameraVector.dz;
-			
-			return dp < 0;
-		});
-		
 		// Draw faces
 		faces.forEach(function(face) {
 			context.fillStyle = "hsla(" + (face.cube.hue || 0) + ",100%,50%,0.5)";
 			
 			context.beginPath();
-			context.moveTo.apply(context,projection.project(face.points[0].x,face.points[0].y,face.points[0].z));
+			context.moveTo.apply(context,projection.project(face.points[0][0],face.points[0][1],face.points[0][2]));
 			face.points.forEach(function(point,index) {
-				if (index) context.lineTo.apply(context,projection.project(point.x,point.y,point.z));
+				if (index) context.lineTo.apply(context,projection.project(point[0],point[1],point[2]));
 			});
 			context.closePath();
 			context.fill();
-			// context.stroke();
 		});
 		
 		// Hopefully that's safe for the near future
@@ -298,11 +186,11 @@ Cube.prototype = {
 		for (x = 0; x <= 1; x++)
 			for (y = 0; y <= 1; y++)
 				for (z = 0; z <= 1; z++)
-					points.push({
-						x: x ? this.x : this.x + this.size,
-						y: y ? this.y : this.y + this.size,
-						z: z ? this.z : this.z + this.size
-					});
+					points.push([
+						x ? this.x : this.x + this.size,
+						y ? this.y : this.y + this.size,
+						z ? this.z : this.z + this.size
+					]);
 		
 		return points;
 	},
