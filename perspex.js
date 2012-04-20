@@ -69,6 +69,34 @@
 			y = x * Math.sin(angleZ) + y * Math.cos(angleZ);
 			
 			return [x,y,z];
+		},
+		
+		// Gets the distance between the camera and the midpoint of an arbitrary polygon
+		distanceTo: function(pointArray) {
+			var polygonMidpoint = [0,0,0],
+				cameraVector = this.getVector();
+			
+			// Find the polygon midpoint
+			pointArray.forEach(function(point) {
+				polygonMidpoint[0] += point[0] / pointArray.length;
+				polygonMidpoint[1] += point[1] / pointArray.length;
+				polygonMidpoint[2] += point[2] / pointArray.length;
+			});
+			
+			// Pull out per-axis distances
+			var vectorComparison = [
+				polygonMidpoint[0] - cameraVector[0],
+				polygonMidpoint[1] - cameraVector[1],
+				polygonMidpoint[2] - cameraVector[2]
+			];
+			
+			// Calculate and return the (potentially diagonal) distance
+			return Math.sqrt(Math.pow(vectorComparison[0],2) + Math.pow(vectorComparison[1],2) + Math.pow(vectorComparison[2],2));
+		},
+		
+		// Finds the view frustum from the camera settings
+		viewFrustum: function() {
+			// coming soon.
 		}
 	};
 	
@@ -128,7 +156,7 @@
 				var polygonCameraVector = [
 					polygonAverage[0] + cameraVector[0],
 					polygonAverage[1] + cameraVector[1],
-					polygonAverage[2] + cameraVector[2],
+					polygonAverage[2] + cameraVector[2]
 				];
 				
 				var dotProduct =
@@ -146,9 +174,13 @@
 		},
 		
 		// Determines, from an array of points and the render area dimensions,
-		// whether a polygon will appear in the view area and should be drawn.
+		// whether a polygon will appear in the 2D view area and should be drawn.
+		// Should be used after frustum culling to limit the amount of projection
+		// processing being done.
 		
 		onscreen: function(pointArray,viewWidth,viewHeight) {
+			if (!viewWidth || !viewHeight) throw new Error("A view width and height must be specified to determine whether polygon is onscreen.");
+			
 			for (var pIndex = 0; pIndex < pointArray.length; pIndex ++) {
 				var projectedPoint = this.project.apply(this,pointArray[pIndex]);
 				
@@ -166,27 +198,26 @@
 		// (triangle or non-weird quadrilateral) from an array of its points.
 		
 		findNormal: function(pointArray) {
-			if (pointArray.length < 3) throw new Error("Can't find normal of a surface with less than three points.");
 			
-			// Shamelessly ripped of Marius Gundersen's 2011 ongamestart talk
-			var vector1 = {
-				dx: pointArray[0][0] - pointArray[1][0],
-				dy: pointArray[0][1] - pointArray[1][1],
-				dz: pointArray[0][2] - pointArray[1][2]
-			};
+			// Newell's Normal Calculation Method (http://www.opengl.org/wiki/Calculating_a_Surface_Normal)
+			var normal = [0,0,0];
 			
-			var vector2 = {
-				dx: pointArray[2][0] - pointArray[1][0],
-				dy: pointArray[2][1] - pointArray[1][1],
-				dz: pointArray[2][2] - pointArray[1][2]
-			};
+			pointArray.forEach(function(point,index) {
+				var current = point,
+					next = pointArray[(index + 1) % pointArray.length];
+					
+				normal[0] += ((current[1] - next[1]) * (current[2] + next[2]));
+				normal[1] += ((current[2] - next[2]) * (current[0] + next[0]));
+				normal[2] += ((current[0] - next[0]) * (current[1] + next[1]));
+			});
 			
-			// Return cross-product
-			return [
-				vector1.dy * vector2.dz - vector1.dz * vector2.dy,
-				vector1.dz * vector2.dx - vector1.dx * vector2.dz,
-				vector1.dx * vector2.dy - vector1.dy * vector2.dx
-			];
+			// Normalise vector
+			var vectorLength = Math.sqrt(Math.pow(normal[0],2) + Math.pow(normal[1],2) + Math.pow(normal[2],2));
+			normal = normal.map(function (component) {
+				return component / vectorLength;
+			});
+			
+			return normal;
 		}
 	};
 	
