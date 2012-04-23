@@ -55,9 +55,9 @@
 			var radConvert = (Math.PI / 180),
 				angleX = this.Θx * radConvert,
 				angleY = this.Θy * radConvert,
-				angleZ = this.Θz * radConvert
-				x = this.cX - (this.eX/2),
-				y = this.cY + (this.eY/2),
+				angleZ = this.Θz * radConvert,
+				x = this.cX + this.eX,
+				y = this.cY + this.eY,
 				z = this.cZ;
 			
 			y = y * Math.cos(angleX) - z * Math.sin(angleX);
