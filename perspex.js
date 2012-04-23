@@ -16,7 +16,6 @@
 	// b is final projected point, in 2D XY
 	// e is the view distance relative to the display surface.
 	
-	
 	// Not using vec3s any more for performance reasons
 	function Camera(cX,cY,cZ, Θx,Θy,Θz, eX,eY,eZ) {
 		// Camera position
@@ -57,8 +56,8 @@
 				angleX = this.Θx * radConvert,
 				angleY = this.Θy * radConvert,
 				angleZ = this.Θz * radConvert
-				x = this.cX + this.eX,
-				y = this.cY + this.eY,
+				x = this.cX - (this.eX/2),
+				y = this.cY + (this.eY/2),
 				z = this.cZ;
 			
 			y = y * Math.cos(angleX) - z * Math.sin(angleX);
@@ -140,34 +139,36 @@
 		// Takes an array of points, and render area dimensions.
 		
 		shouldDrawPolygon: function(pointArray,viewWidth,viewHeight) {
+			// Helper function for determining the distance between two 3D points
+			function pointDistance(pointa,pointb) {
+				var comparisonVector = [
+					pointa[0] - pointb[0],
+					pointa[1] - pointb[1],
+					pointa[2] - pointb[2]
+				];
+		
+				return Math.sqrt(Math.pow(comparisonVector[0],2) + Math.pow(comparisonVector[1],2) + Math.pow(comparisonVector[2],2));
+			}
+			
 			// At least one part of the polygon projects to the display surface.
 			if (this.onscreen(pointArray,viewWidth,viewHeight)) {
 				var surfaceNormal = this.findNormal(pointArray),
 					cameraVector = this.camera.getVector();
-					
-				cameraVector[2] -= this.camera.eZ;
 				
-				var polygonAverage = [
+				var surfaceMidpoint = [
 					pointArray.reduce(function(prev,current){ return prev + current[0]; },0) / pointArray.length,
 					pointArray.reduce(function(prev,current){ return prev + current[1]; },0) / pointArray.length,
 					pointArray.reduce(function(prev,current){ return prev + current[2]; },0) / pointArray.length
 				];
 				
-				var polygonCameraVector = [
-					polygonAverage[0] + cameraVector[0],
-					polygonAverage[1] + cameraVector[1],
-					polygonAverage[2] + cameraVector[2]
+				var vectorOut = [
+					surfaceMidpoint[0] + surfaceNormal[0],
+					surfaceMidpoint[1] + surfaceNormal[1],
+					surfaceMidpoint[2] + surfaceNormal[2]
 				];
 				
-				var dotProduct =
-					(polygonCameraVector[0] * surfaceNormal[0]) + 
-					(polygonCameraVector[1] * surfaceNormal[1]) + 
-					(polygonCameraVector[2] * surfaceNormal[2]);
-				
-				if (dotProduct < 0) return false;
-				
-				// Or, if we're positive... return true.
-				return true;
+				// Is the vector offset further away than our surface midpoint? If so, it must be facing away from us. Cull it.
+				return pointDistance(vectorOut,cameraVector) < pointDistance(surfaceMidpoint,cameraVector);
 			}
 			
 			return false;
