@@ -12,7 +12,7 @@
 				position		 = "absolute";
 				bottom			 = "0px";
 				left			 = "0px";
-				height			 = "30px";
+				minHeight		 = "30px";
 				backgroundColor	 = "rgba(0,0,0,0.8)";
 				color			 = "white";
 				fontFamily		 = "sans-serif";

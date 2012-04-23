@@ -87,7 +87,7 @@ window.addEventListener("load",function(EventData) {
 		var totalFaces = faces.length;
 		// Only return the faces we're actually going to draw...
 		faces = faces.filter(function(face) {
-			return true; //projection.shouldDrawPolygon(face,width,height);
+			return projection.shouldDrawPolygon(face,width,height);
 		});
 		
 		// Sort by draw order...
@@ -116,21 +116,19 @@ window.addEventListener("load",function(EventData) {
 			lightness = lightness + Math.abs(dotProduct / 25);
 			lightness = lightness > 100 ? 100 : lightness;
 			
-			if (dotProduct < 0) {
-				context.fillStyle = "hsla(" + face.cube.hue + ",100%," + lightness + "%,1)";
-				context.strokeStyle = "hsla(" + face.cube.hue + ",100%," + lightness + "%,1)";
+			context.fillStyle = "hsla(" + face.cube.hue + ",100%," + lightness + "%,1)";
+			context.strokeStyle = "hsla(" + face.cube.hue + ",100%," + lightness + "%,1)";
 			
-				context.beginPath();
-				context.moveTo.apply(context,projection.project(face[0][0],face[0][1],face[0][2]));
-				face.forEach(function(point,index) {
+			context.beginPath();
+			context.moveTo.apply(context,projection.project(face[0][0],face[0][1],face[0][2]));
+			face.forEach(function(point,index) {
 				
-					// context.fillRect.apply(context,projection.project(point[0],point[1],point[2]).concat([3,3]));
-					if (index) context.lineTo.apply(context,projection.project(point[0],point[1],point[2]));
-				});
-				context.closePath();
-				context.fill();
-				context.stroke();
-			}
+				// context.fillRect.apply(context,projection.project(point[0],point[1],point[2]).concat([3,3]));
+				if (index) context.lineTo.apply(context,projection.project(point[0],point[1],point[2]));
+			});
+			context.closePath();
+			context.fill();
+			context.stroke();
 		});
 		
 		context.fillStyle = "white";
