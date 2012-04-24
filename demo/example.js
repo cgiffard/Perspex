@@ -25,16 +25,16 @@ window.addEventListener("load",function(EventData) {
 	canvas.height = height;
 	
 	// Local tracking for camera
-	var cameraX = 200,
-		cameraY = 100,
+	var cameraX = (width/2) * -1,
+		cameraY = (height/2) * -1,
 		cameraZ = -1500
-		crotX = -0.07,
-		crotY = 3.27,
-		crotZ = -0.06,
-		pupilWidth = width,
-		pupilHeight = height,
-		fieldOfView = 60, // 60 degrees
-		viewDepth = (Math.tan(fieldOfView * (Math.PI/180)) * (pupilWidth/2));
+		crotX = 0,
+		crotY = 0,
+		crotZ = 0,
+		pupilWidth = 1,
+		pupilHeight = 1,
+		fieldOfView = 60,
+		viewDepth = (Math.tan(fieldOfView * (Math.PI/180)) * (width/2));
 	
 	var startTime = (new Date()).getTime();
 	var framesPast = 0;
@@ -50,7 +50,7 @@ window.addEventListener("load",function(EventData) {
 	
 	var cubes = [];
 	
-	for (var c = 0; c < 10; c ++) {
+	for (var c = 0; c < 25; c ++) {
 		cubes.push(new Cube(100,projection));
 		cubes[cubes.length-1].hue = (360/10) * c;
 	}
@@ -92,13 +92,7 @@ window.addEventListener("load",function(EventData) {
 		
 		// Sort by draw order...
 		faces = faces.sort(function(facea,faceb) {
-			return projection.camera.distanceTo(facea) - projection.camera.distanceTo(faceb);
-		});
-		
-		var cameraPosition = (cameraX + cameraY + cameraZ) / 3;
-		faces = faces.sort(function(facea,faceb) {
-			// temp, doesn't take into account camera position
-			return (faceb.averagePosition - cameraPosition) - (facea.averagePosition - cameraPosition);
+			return projection.camera.distanceTo(faceb) - projection.camera.distanceTo(facea);
 		});
 		
 		// Draw faces
@@ -114,7 +108,7 @@ window.addEventListener("load",function(EventData) {
 			];
 			
 			lightness = lightness + Math.abs(dotProduct / 25);
-			lightness = lightness > 100 ? 100 : lightness;
+			lightness = lightness > 90 ? 90 : lightness;
 			
 			context.fillStyle = "hsla(" + face.cube.hue + ",100%," + lightness + "%,1)";
 			context.strokeStyle = "hsla(" + face.cube.hue + ",100%," + lightness + "%,1)";
@@ -122,8 +116,6 @@ window.addEventListener("load",function(EventData) {
 			context.beginPath();
 			context.moveTo.apply(context,projection.project(face[0][0],face[0][1],face[0][2]));
 			face.forEach(function(point,index) {
-				
-				// context.fillRect.apply(context,projection.project(point[0],point[1],point[2]).concat([3,3]));
 				if (index) context.lineTo.apply(context,projection.project(point[0],point[1],point[2]));
 			});
 			context.closePath();
@@ -136,8 +128,8 @@ window.addEventListener("load",function(EventData) {
 		context.fillStyle = "black";
 		context.fillText("Drawing " + faces.length + "/" + totalFaces + " Polygons",15,20);
 		
-		var timeElapsed = (new Date().getTime()) - startTime;
-		var fps = Math.round(timeElapsed / framesPast);
+		var timeElapsed = ((new Date().getTime()) - startTime)/1000;
+		var fps = Math.round(framesPast/timeElapsed);
 		
 		context.fillStyle = "white";
 		context.fillRect(250,10,50,15);
@@ -153,9 +145,9 @@ window.addEventListener("load",function(EventData) {
 		// 		if (window.mozRequestAnimationFrame)	mozRequestAnimationFrame(runProjection,canvas);
 		// 		if (window.oRequestAnimationFrame) 		oRequestAnimationFrame(runProjection,canvas);
 		// 		if (window.requestAnimationFrame)		requestAnimationFrame(runProjection,canvas);
+		
+		window.setTimeout(runProjection,33);
 	}
-	
-	window.setInterval(runProjection,50);
 	
 	setPositions();
 	runProjection();

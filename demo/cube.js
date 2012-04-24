@@ -130,6 +130,7 @@ Cube.prototype = {
 	triangles: function() {
 		var splines = this.splines(),
 			triangles = [],
+			cleanTriangles = [],
 			self = this;
 		
 		splines.forEach(function(spline) {
@@ -154,15 +155,51 @@ Cube.prototype = {
 				});
 		});
 		
-		// Reorder triangles to ensure clockwise orientation
-		triangles = triangles.map(function(triangle) {
-			var surfaceNormal = self.projection.findNormal(triangle);
-			
-			var surfaceMidpoint = [
+		// Gets the midpoint for a triangle.
+		function triangleMidpoint(triangle) {
+			return [
 				(triangle[0][0] + triangle[1][0] + triangle[2][0]) / 3,
 				(triangle[0][1] + triangle[1][1] + triangle[2][1]) / 3,
 				(triangle[0][2] + triangle[1][2] + triangle[2][2]) / 3
 			];
+		}
+		
+		// Determines whether the polygon already exists in the clean list
+		// or, whether it intersects a polygon in the clean list
+		function validForCleanList(candidateTri) {
+			// Just return true if there's no triangles in the list yet.
+			if (!cleanTriangles.length) return true;
+			
+			// Using a traditional loop that we can break out of easily.
+			for (var triIndex = 0; triIndex < cleanTriangles.length; triIndex ++) {
+				var cleanTri = cleanTriangles[triIndex];
+				var candidateTriMidpoint = triangleMidpoint(candidateTri),
+					cleanTriMidpoint = triangleMidpoint(cleanTri);
+				
+				var midpointDistance = pointDistance(candidateTriMidpoint,cleanTriMidpoint);
+				
+				// We're the same triangle!
+				if (candidateTriMidpoint === cleanTriMidpoint) return false;
+				
+				if (midpointDistance < self.size/2.2) {
+					return false;
+				}
+			}
+			
+			// We didn't die. Must be valid!
+			return true;
+		}
+		
+		// Scour triangles for clean list validity.
+		triangles.forEach(function(triangle) {
+			if (validForCleanList(triangle)) cleanTriangles.push(triangle);
+		});
+		
+		// Reorder triangles to ensure clockwise orientation
+		cleanTriangles = cleanTriangles.map(function(triangle) {
+			var surfaceNormal = self.projection.findNormal(triangle);
+			
+			var surfaceMidpoint = triangleMidpoint(triangle);
 			
 			var vectorOut = [
 				surfaceMidpoint[0] + (surfaceNormal[0] * (self.size/4)),
@@ -180,6 +217,6 @@ Cube.prototype = {
 			return triangle;
 		});
 		
-		return triangles;
+		return cleanTriangles;//.slice(0,12);
 	}
 }

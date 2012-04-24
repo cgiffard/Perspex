@@ -168,7 +168,7 @@
 				];
 				
 				// Is the vector offset further away than our surface midpoint? If so, it must be facing away from us. Cull it.
-				return pointDistance(vectorOut,cameraVector) < pointDistance(surfaceMidpoint,cameraVector);
+				return pointDistance(vectorOut,cameraVector) < pointDistance(surfaceMidpoint,cameraVector) + 1;
 			}
 			
 			return false;
