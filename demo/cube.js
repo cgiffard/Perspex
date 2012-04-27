@@ -197,9 +197,9 @@
 					surfaceMidpoint[2] + (surfaceNormal[2] * (self.size/4))
 				];
 			
-				var surfaceMidpointOffset = pointDistance([0,0,0],surfaceMidpoint),
-					vectorOutOffset = pointDistance([0,0,0],vectorOut);
-			
+				var surfaceMidpointOffset = pointDistance([self.x,self.y,self.z],surfaceMidpoint),
+					vectorOutOffset = pointDistance([self.x,self.y,self.z],vectorOut);
+				
 				if (vectorOutOffset < surfaceMidpointOffset) {
 					triangle = triangle.reverse();
 				}

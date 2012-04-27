@@ -51,7 +51,7 @@ window.addEventListener("load",function(EventData) {
 	var cubes = [], hue=0, cumulativeFrameTime = 0;
 	window.cubes = cubes;
 	
-	for (var c = 0; c < 10; c ++) {
+	for (var c = 0; c < 25; c ++) {
 		cubes.push([sphere,cube][Math.round(Math.random())](100,projection));
 		cubes[cubes.length-1].hue = (360/10) * c;
 		cubes[cubes.length-1].detail = 8;
@@ -59,10 +59,10 @@ window.addEventListener("load",function(EventData) {
 	
 	function setPositions() {
 		cubes.forEach(function(cube) {
-			cube.radius = cube.size = 10 + Math.ceil(Math.random()*20);
-			cube.x = Math.floor(-100+Math.random()*200);
-			cube.y = Math.floor(-100+Math.random()*200);
-			cube.z = Math.floor(-100+Math.random()*200);
+			cube.radius = cube.size = 20 + Math.ceil(Math.random()*100);
+			cube.x = Math.floor(-500+Math.random()*1000);
+			cube.y = Math.floor(-500+Math.random()*1000);
+			cube.z = Math.floor(-500+Math.random()*1000);
 			cube.axis = ['x','y','z'][Math.floor(Math.random()*3)];
 			cube.direction = [-1,+1][Math.floor(Math.random()*2)];
 			cube.speed = Math.random()*4;
@@ -151,7 +151,7 @@ window.addEventListener("load",function(EventData) {
 				});
 				context.closePath();
 				context.fill();
-				context.stroke();
+				// context.stroke();
 			// }
 		});
 		

@@ -10,6 +10,40 @@
 	// I'll have to run some benchmarks first.
 	
 	// Helpers -------------- //
+	// Helper functions for vector maths
+	function rotateX(point, angle) {
+	    var rad		= angle * Math.PI / 180,
+			cosa	= Math.cos(rad),
+			sina	= Math.sin(rad),
+			x, y, z;
+		
+	    y = point[1] * cosa - point[2] * sina;
+	    z = point[1] * sina + point[2] * cosa;
+	    return [point[0], y, z];
+	}
+							
+	function rotateY(point, angle) {
+	    var rad		= angle * Math.PI / 180,
+			cosa	= Math.cos(rad),
+			sina	= Math.sin(rad),
+			x, y, z;
+		
+	    z = point[2] * cosa - point[0] * sina;
+	    x = point[2] * sina + point[0] * cosa;
+	    return [x, point[1], z];
+	}
+							
+	function rotateZ(point, angle) {
+	    var rad		= angle * Math.PI / 180,
+			cosa	= Math.cos(rad),
+			sina	= Math.sin(rad),
+			x, y, z;
+		
+	    x = point[0] * cosa - point[1] * sina;
+	    y = point[0] * sina + point[1] * cosa;
+	    return [x, y, point[2]];
+	}
+	
 	
 	// Helper function for determining the distance between two 3D points
 	function pointDistance(pointa,pointb) {
@@ -180,6 +214,10 @@
 			if (self.onscreen(pointArray,viewWidth,viewHeight)) {
 				var cameraVector = self.camera.getVector(),
 					surfaceNormal = self.findNormal(pointArray);
+					
+				surfaceNormal = rotateX(surfaceNormal,self.camera.Θx);
+				surfaceNormal = rotateY(surfaceNormal,self.camera.Θy);
+				surfaceNormal = rotateZ(surfaceNormal,self.camera.Θz);
 			
 				var dotProduct = [
 					(surfaceNormal[0] * cameraVector[0]) +
