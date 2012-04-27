@@ -9,6 +9,37 @@
 	// For performance reasons, I may move away from objects for setting camera/view position and rotation.
 	// I'll have to run some benchmarks first.
 	
+	// Helpers -------------- //
+	
+	// Helper function for determining the distance between two 3D points
+	function pointDistance(pointa,pointb) {
+		var comparisonVector = [
+			pointa[0] - pointb[0],
+			pointa[1] - pointb[1],
+			pointa[2] - pointb[2]
+		];
+		
+		return Math.sqrt(Math.pow(comparisonVector[0],2) + Math.pow(comparisonVector[1],2) + Math.pow(comparisonVector[2],2));
+	}
+	
+	// Rotates a point in 3D space, by an arbitrary X, Y, and X value
+	function rotatePoint(point,angleX,angleY,angleZ) {
+		var radConvert = (Math.PI / 180),
+			x = point[0],
+			y = point[1],
+			z = point[2];
+		
+		y = y * Math.cos(angleX * radConvert) - z * Math.sin(angleX * radConvert);
+		z = y * Math.sin(angleX * radConvert) + z * Math.cos(angleX * radConvert);
+		z = z * Math.cos(angleY * radConvert) - x * Math.sin(angleY * radConvert);
+		x = z * Math.sin(angleY * radConvert) + x * Math.cos(angleY * radConvert);
+		x = x * Math.cos(angleZ * radConvert) - y * Math.sin(angleZ * radConvert);
+		y = x * Math.sin(angleZ * radConvert) + y * Math.cos(angleZ * radConvert);
+		
+		return [x,y,z];
+	}
+	
+	
 	// Θ represents camera (c) rotation, in xyz, euler transform
 	// c is camera position, in xyz
 	// d is transformed point in xyz
@@ -26,6 +57,9 @@
 		
 		// View position
 		this.setViewOffset(eX,eY,eZ);
+		
+		// Projection for later storage.
+		this.projection = null;
 	}
 	
 	Camera.prototype = {
@@ -50,47 +84,43 @@
 			this.eZ = eZ && !isNaN(eZ) ? eZ : 0;
 		},
 		
-		// Finds the camera vector based on its location and rotation.
+		// Finds the camera vector based on its location and pupil dimensions.
 		getVector: function() {
-			var radConvert = (Math.PI / 180),
-				angleX = this.Θx * radConvert,
-				angleY = this.Θy * radConvert,
-				angleZ = this.Θz * radConvert,
-				x = this.cX + this.eX,
-				y = this.cY + this.eY,
-				z = this.cZ;
-			
-			y = y * Math.cos(angleX) - z * Math.sin(angleX);
-			z = y * Math.sin(angleX) + z * Math.cos(angleX);
-			z = z * Math.cos(angleY) - x * Math.sin(angleY);
-			x = z * Math.sin(angleY) + x * Math.cos(angleY);
-			x = x * Math.cos(angleZ) - y * Math.sin(angleZ);
-			y = x * Math.sin(angleZ) + y * Math.cos(angleZ);
-			
-			return [x,y,z];
+			return [
+				this.cX + this.eX,
+				this.cY + this.eY,
+				this.cZ
+			];
 		},
 		
 		// Gets the distance between the camera and the midpoint of an arbitrary polygon
-		distanceTo: function(pointArray) {
-			var polygonMidpoint = [0,0,0],
-				cameraVector = this.getVector();
+		distanceTo: function(pointArray,useClosestPoint) {
+			if (!pointArray.length) throw new Error("You must provide an array of points to find the distance.");
 			
-			// Find the polygon midpoint
-			pointArray.forEach(function(point) {
-				polygonMidpoint[0] += point[0] / pointArray.length;
-				polygonMidpoint[1] += point[1] / pointArray.length;
-				polygonMidpoint[2] += point[2] / pointArray.length;
-			});
+			var comparisonPoint = [0,0,0],
+				cameraVector = this.getVector()
+				self = this;
 			
-			// Pull out per-axis distances
-			var vectorComparison = [
-				polygonMidpoint[0] - cameraVector[0],
-				polygonMidpoint[1] - cameraVector[1],
-				polygonMidpoint[2] - cameraVector[2]
-			];
+			if (useClosestPoint) {
+				// Comparing based on closest point in polygon.
+				var closestPointDistance = Infinity;
+				
+				pointArray.forEach(function(point) {
+					var pointDistance = self.distanceTo(point);
+					if (pointDistance < closestPointDistance) {
+						closestPointDistance = pointDistance;
+						comparisonPoint = point;
+					}
+				});
+				
+			} else {
+				// Comparing based on polygon average/midpoint (NOT centroid)
+				// If there's only one point, the just use it as the midpoint
+				comparisonPoint = pointArray.length > 1 ? this.projection.findMidpoint(pointArray) : pointArray.slice(0,1);
+			}
 			
 			// Calculate and return the (potentially diagonal) distance
-			return Math.sqrt(Math.pow(vectorComparison[0],2) + Math.pow(vectorComparison[1],2) + Math.pow(vectorComparison[2],2));
+			return pointDistance(comparisonPoint,cameraVector);
 		},
 		
 		// Finds the view frustum from the camera settings
@@ -102,6 +132,7 @@
 	
 	function Projection(camera, opts) {
 		this.camera = camera instanceof Camera ? camera : new Camera(0,0,0, 0,0,0, 0,0,0);
+		this.camera.projection = this;
 		
         // initialise options
         opts = opts || {};
@@ -116,10 +147,14 @@
 		project: function(aX, aY, aZ) {
 			var dX, dY, dZ; // Destination
 			var c = this.camera;
+			var radConvert = Math.PI / 180,
+				cΘx = c.Θx * radConvert,
+				cΘy = c.Θy * radConvert,
+				cΘz = c.Θz * radConvert;
 			
-			dX = Math.cos(c.Θy) * (Math.sin(c.Θz) * (aY - c.cY) + Math.cos(c.Θz) * (aX - c.cX)) - Math.sin(c.Θy) * (aZ - c.cZ);
-			dY = Math.sin(c.Θx) * (Math.cos(c.Θy) * (aZ - c.cZ) + Math.sin(c.Θy) * (Math.sin(c.Θz) * (aY - c.cY) + Math.cos(c.Θz) * (aX - c.cX))) + Math.cos(c.Θx) * (Math.cos(c.Θz) * (aY - c.cY) - Math.sin(c.Θz) * (aX - c.cX));
-			dZ = Math.cos(c.Θx) * (Math.cos(c.Θy) * (aZ - c.cZ) + Math.sin(c.Θy) * (Math.sin(c.Θz) * (aY - c.cY) + Math.cos(c.Θz) * (aX - c.cX))) - Math.sin(c.Θx) * (Math.cos(c.Θz) * (aY - c.cY) - Math.sin(c.Θz) * (aX - c.cX));
+			dX = Math.cos(cΘy) * (Math.sin(cΘz) * (aY - c.cY) + Math.cos(cΘz) * (aX - c.cX)) - Math.sin(cΘy) * (aZ - c.cZ);
+			dY = Math.sin(cΘx) * (Math.cos(cΘy) * (aZ - c.cZ) + Math.sin(cΘy) * (Math.sin(cΘz) * (aY - c.cY) + Math.cos(cΘz) * (aX - c.cX))) + Math.cos(cΘx) * (Math.cos(cΘz) * (aY - c.cY) - Math.sin(cΘz) * (aX - c.cX));
+			dZ = Math.cos(cΘx) * (Math.cos(cΘy) * (aZ - c.cZ) + Math.sin(cΘy) * (Math.sin(cΘz) * (aY - c.cY) + Math.cos(cΘz) * (aX - c.cX))) - Math.sin(cΘx) * (Math.cos(cΘz) * (aY - c.cY) - Math.sin(cΘz) * (aX - c.cX));
 			
 			bX = (dX - c.eX) * (c.eZ/dZ);
 			bY = (dY - c.eY) * (c.eZ/dZ);
@@ -127,8 +162,8 @@
             // if we are clamping, then clamp the values
             // clamp using the fastest proper rounding: http://jsperf.com/math-round-vs-hack/3
             if (this.clamp) {
-                bX = ~~(bX + (bX > 0 ? 0.5 : -0.5));
-                bY = ~~(bY + (bY > 0 ? 0.5 : -0.5));
+                bX = ~~(bX + (bX > 0 ? 1 : -1));
+                bY = ~~(bY + (bY > 0 ? 1 : -1));
             }
 			
 			return [bX, bY];
@@ -139,36 +174,20 @@
 		// Takes an array of points, and render area dimensions.
 		
 		shouldDrawPolygon: function(pointArray,viewWidth,viewHeight) {
-			// Helper function for determining the distance between two 3D points
-			function pointDistance(pointa,pointb) {
-				var comparisonVector = [
-					pointa[0] - pointb[0],
-					pointa[1] - pointb[1],
-					pointa[2] - pointb[2]
-				];
-		
-				return Math.sqrt(Math.pow(comparisonVector[0],2) + Math.pow(comparisonVector[1],2) + Math.pow(comparisonVector[2],2));
-			}
+			var self = this;
 			
 			// At least one part of the polygon projects to the display surface.
-			if (this.onscreen(pointArray,viewWidth,viewHeight)) {
-				var surfaceNormal = this.findNormal(pointArray),
-					cameraVector = this.camera.getVector();
-				
-				var surfaceMidpoint = [
-					pointArray.reduce(function(prev,current){ return prev + current[0]; },0) / pointArray.length,
-					pointArray.reduce(function(prev,current){ return prev + current[1]; },0) / pointArray.length,
-					pointArray.reduce(function(prev,current){ return prev + current[2]; },0) / pointArray.length
+			if (self.onscreen(pointArray,viewWidth,viewHeight)) {
+				var cameraVector = self.camera.getVector(),
+					surfaceNormal = self.findNormal(pointArray);
+			
+				var dotProduct = [
+					(surfaceNormal[0] * cameraVector[0]) +
+					(surfaceNormal[1] * cameraVector[1]) +
+					(surfaceNormal[2] * cameraVector[2])
 				];
-				
-				var vectorOut = [
-					surfaceMidpoint[0] + surfaceNormal[0],
-					surfaceMidpoint[1] + surfaceNormal[1],
-					surfaceMidpoint[2] + surfaceNormal[2]
-				];
-				
-				// Is the vector offset further away than our surface midpoint? If so, it must be facing away from us. Cull it.
-				return pointDistance(vectorOut,cameraVector) < pointDistance(surfaceMidpoint,cameraVector) + 1;
+			
+				return dotProduct > 0;
 			}
 			
 			return false;
@@ -219,6 +238,19 @@
 			});
 			
 			return normal;
+		},
+		
+		// Finds the middle/average from an arbitrary array of points.
+		findMidpoint: function(pointArray) {
+			var midpoint = [0,0,0];
+			
+			pointArray.forEach(function(point) {
+				midpoint[0] += point[0] / pointArray.length;
+				midpoint[1] += point[1] / pointArray.length;
+				midpoint[2] += point[2] / pointArray.length;
+			});
+			
+			return midpoint;
 		}
 	};
 	
@@ -230,5 +262,5 @@
     perspex.Projection = Projection;
 	perspex.Camera = Camera;
 	
-    (typeof module != "undefined" && module.exports) ? (module.exports = perspex) : (typeof define != "undefined" ? (define("perspex", [], function() { return perspex; })) : (glob.perspex = perspex));
+	(typeof module != "undefined" && module.exports) ? (module.exports = perspex) : (typeof define != "undefined" ? (define("perspex", [], function() { return perspex; })) : (glob.perspex = perspex));
 })(this);

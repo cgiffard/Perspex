@@ -12,7 +12,7 @@
 				position		 = "absolute";
 				bottom			 = "0px";
 				left			 = "0px";
-				minHeight		 = "30px";
+				height			 = "30px";
 				backgroundColor	 = "rgba(0,0,0,0.8)";
 				color			 = "white";
 				fontFamily		 = "sans-serif";
@@ -46,7 +46,7 @@
 				
 				tmpControlInput.type = "number";
 				tmpControlInput.value = self.boundCamera[property[0]];
-				tmpControlInput.step = "0.01";
+				tmpControlInput.step = "1";
 				tmpControlInput.id = "camval" + property[0];
 				
 				with (tmpControlInput.style) {
