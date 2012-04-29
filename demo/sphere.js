@@ -11,7 +11,7 @@
 	    z = point[1] * sina + point[2] * cosa;
 	    return [point[0], y, z];
 	}
-							
+	
 	function rotateY(point, angle) {
 	    var rad		= angle * Math.PI / 180,
 			cosa	= Math.cos(rad),
@@ -22,7 +22,7 @@
 	    x = point[2] * sina + point[0] * cosa;
 	    return [x, point[1], z];
 	}
-							
+	
 	function rotateZ(point, angle) {
 	    var rad		= angle * Math.PI / 180,
 			cosa	= Math.cos(rad),
@@ -131,20 +131,24 @@
 							nextRingPoint = nextRing[index],
 							nextRingNextPoint = nextRing[index+1];
 						
-						triangles.push([
-							point,
-							nextPoint,
-							nextRingPoint
-						]);
-						
-						if (!!nextRingPoint) {
+						if (index < ring.length - 2) {
 							triangles.push([
+								point,
+								nextPoint,
+								nextRingPoint
+							],
+							[
 								nextRingNextPoint,
 								nextRingPoint,
 								nextPoint,
 							]);
+						} else {
+							triangles.push([
+								point,
+								nextPoint,
+								nextRingPoint
+							]);
 						}
-						
 					}
 				});
 			});

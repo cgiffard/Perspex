@@ -121,8 +121,8 @@
 		// Finds the camera vector based on its location and pupil dimensions.
 		getVector: function() {
 			return [
-				this.cX + this.eX,
-				this.cY + this.eY,
+				this.cX,
+				this.cY,
 				this.cZ
 			];
 		},
@@ -212,23 +212,44 @@
 			
 			// At least one part of the polygon projects to the display surface.
 			if (self.onscreen(pointArray,viewWidth,viewHeight)) {
-				var cameraVector = self.camera.getVector(),
-					surfaceNormal = self.findNormal(pointArray);
-					
-				surfaceNormal = rotateX(surfaceNormal,self.camera.Θx);
-				surfaceNormal = rotateY(surfaceNormal,self.camera.Θy);
-				surfaceNormal = rotateZ(surfaceNormal,self.camera.Θz);
-			
-				var dotProduct = [
-					(surfaceNormal[0] * cameraVector[0]) +
-					(surfaceNormal[1] * cameraVector[1]) +
-					(surfaceNormal[2] * cameraVector[2])
-				];
-			
-				return dotProduct > 0;
+				return self.cullBackface(pointArray);
 			}
 			
 			return false;
+		},
+		
+		// Determines whether a polygon should be drawn, based on whether it faces the camera.
+		// (Backface visibility culling)
+		cullBackface: function(pointArray) {
+			var self = this,
+				cameraVector = self.camera.getVector(),
+				surfaceNormal = self.findNormal(pointArray);
+			
+			var cameraVectors = [
+				[cameraVector[0] - self.camera.eX,	cameraVector[1] - self.camera.eY,	cameraVector[2]],
+				[cameraVector[0] - self.camera.eX,	cameraVector[1] + self.camera.eY,	cameraVector[2]],
+				[cameraVector[0] + self.camera.eX,	cameraVector[1] - self.camera.eY,	cameraVector[2]],
+				[cameraVector[0] + self.camera.eX,	cameraVector[1] + self.camera.eY,	cameraVector[2]],
+				// This is somewhat arbitrary. Testing will confirm whether it is really necessary, or whether the values need tweaking.
+				[cameraVector[0] - (self.camera.eX * 2), cameraVector[1] - (self.camera.eY * 2), cameraVector[2]]
+			];
+			
+			// Because of our variable pupil size, we need to run the calculation four/five times
+			// (for each of our four pupil extremes)
+			return cameraVectors.reduce(function(rollingValue,vector){
+				return rollingValue || self.facesVector(surfaceNormal,vector);
+			},false);
+		},
+		
+		// Determines whether a polygon (described by a normal) faces an arbitrary vector.
+		facesVector: function(surfaceNormal,vector) {
+			var dotProduct = [
+				(surfaceNormal[0] * vector[0]) +
+				(surfaceNormal[1] * vector[1]) +
+				(surfaceNormal[2] * vector[2])
+			];
+			
+			return dotProduct > 0;
 		},
 		
 		// Determines, from an array of points and the render area dimensions,
