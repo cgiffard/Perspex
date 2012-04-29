@@ -19,8 +19,6 @@ window.addEventListener("load",function(EventData) {
 	
 	
 	// Set up canvas & body style
-	document.body.style.margin = "0px";
-	document.body.style.overflow = "hidden";
 	canvas.width = width;
 	canvas.height = height;
 	
@@ -33,8 +31,7 @@ window.addEventListener("load",function(EventData) {
 		crotZ = 0,
 		pupilWidth = 1,
 		pupilHeight = 1,
-		fieldOfView = 70,
-		viewDepth = 3700;//(Math.tan(fieldOfView * (Math.PI/180)) * (width/2));
+		viewDepth = 2500;
 	
 	var startTime = (new Date()).getTime();
 	var framesPast = 0;
@@ -54,7 +51,7 @@ window.addEventListener("load",function(EventData) {
 	for (var c = 0; c < 25; c ++) {
 		cubes.push([sphere,cube][Math.round(Math.random())](100,projection));
 		cubes[cubes.length-1].hue = (360/10) * c;
-		cubes[cubes.length-1].detail = 8;
+		cubes[cubes.length-1].detail = 10;
 	}
 	
 	function setPositions() {
@@ -74,7 +71,8 @@ window.addEventListener("load",function(EventData) {
 	
 	function runProjection() {
 		// Reset display surface
-		canvas.width = width;
+		context.fillStyle = "black";
+		context.fillRect(0,0,width,height);
 		
 		var frameStarted = (new Date()).getTime();
 		
@@ -137,27 +135,23 @@ window.addEventListener("load",function(EventData) {
 				(surfaceNormal[2] * cameraVector[2])
 			];
 			
-			// if (dotProduct > 0) {
-				lightness = lightness + Math.abs(dotProduct / 20);
-				lightness = lightness > 90 ? 90 : lightness;
+			lightness = lightness + Math.abs(dotProduct / 20);
+			lightness = lightness > 90 ? 90 : lightness;
 				
-				context.fillStyle = "hsla(" + hue + ",100%," + lightness + "%,1)";
-				context.strokeStyle = "hsla(" + hue + ",100%," + lightness + "%,1)";
+			context.fillStyle = "hsla(" + hue + ",100%," + lightness + "%,1)";
+			context.strokeStyle = "hsla(" + hue + ",100%," + lightness + "%,1)";
 				
-				context.beginPath();
-				context.moveTo.apply(context,projection.project(face[0][0],face[0][1],face[0][2]));
-				face.forEach(function(point,index) {
-					if (index) context.lineTo.apply(context,projection.project(point[0],point[1],point[2]));
-				});
-				context.closePath();
-				context.fill();
-				// context.stroke();
-			// }
+			context.beginPath();
+			context.moveTo.apply(context,projection.project(face[0][0],face[0][1],face[0][2]));
+			face.forEach(function(point,index) {
+				if (index) context.lineTo.apply(context,projection.project(point[0],point[1],point[2]));
+			});
+			context.closePath();
+			context.fill();
+			context.stroke();
 		});
 		
 		context.fillStyle = "white";
-		context.fillRect(10,10,130,15);
-		context.fillStyle = "black";
 		context.fillText("Drawing " + faces.length + "/" + totalFaces + " Polygons",15,20);
 		
 		var timeElapsed = ((new Date().getTime()) - startTime)/1000;
@@ -166,22 +160,18 @@ window.addEventListener("load",function(EventData) {
 		var fps = Math.round(framesPast/timeElapsed);
 		
 		context.fillStyle = "white";
-		context.fillRect(250,10,50,15);
-		context.fillStyle = "black";
 		context.fillText("FPS: " + fps,250,20);
-		
 		context.fillText("FrameTime: " + (cumulativeFrameTime/framesPast),350,20);
 		
 		framesPast ++;
 		hue++;
 		
-		// Hopefully that's safe for the near future
-		//if (window.webkitRequestAnimationFrame)	webkitRequestAnimationFrame(runProjection,canvas);
-		//if (window.msieRequestAnimationFrame)	msieRequestAnimationFrame(runProjection,canvas);
-		//if (window.mozRequestAnimationFrame)	mozRequestAnimationFrame(runProjection,canvas);
-		//if (window.oRequestAnimationFrame) 		oRequestAnimationFrame(runProjection,canvas);
-		//if (window.requestAnimationFrame)		requestAnimationFrame(runProjection,canvas);
-		window.setTimeout(runProjection,0);
+		// Hopefully this is safe for the near future
+		if (window.webkitRequestAnimationFrame)	webkitRequestAnimationFrame(runProjection,canvas);
+		if (window.msieRequestAnimationFrame)	msieRequestAnimationFrame(runProjection,canvas);
+		if (window.mozRequestAnimationFrame)	mozRequestAnimationFrame(runProjection,canvas);
+		if (window.oRequestAnimationFrame) 		oRequestAnimationFrame(runProjection,canvas);
+		if (window.requestAnimationFrame)		requestAnimationFrame(runProjection,canvas);
 	}
 	
 	setPositions();

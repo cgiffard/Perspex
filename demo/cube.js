@@ -74,9 +74,9 @@
 				for (y = 0; y <= 1; y++)
 					for (z = 0; z <= 1; z++)
 						points.push([
-							x ? (this.size / 2) *-1 : this.size / 2,
-							y ? (this.size / 2) *-1 : this.size / 2,
-							z ? (this.size / 2) *-1 : this.size / 2
+							x ? (this.size / 2) *-1 : (this.size / 2),
+							y ? (this.size / 2) *-1 : (this.size / 2),
+							z ? (this.size / 2) *-1 : (this.size / 2)
 						]);
 		
 			return points;

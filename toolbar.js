@@ -1,4 +1,4 @@
-// This is for the browser.
+// In-browser toolbar for steering a perspex projection's camera.
 (function (glob) {
 	
 	function Toolbar(camera) {
