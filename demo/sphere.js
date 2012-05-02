@@ -113,6 +113,14 @@
 					if (this.xRotation) point = rotateX(point,this.xRotation);
 					if (this.zRotation) point = rotateZ(point,this.zRotation);
 					
+					// Normalise point...
+					var pointLength = Math.sqrt(Math.pow(point[0],2) + Math.pow(point[1],2) + Math.pow(point[2],2));
+					point.normal = [
+						point[0] / pointLength,
+						point[1] / pointLength,
+						point[2] / pointLength
+					];
+					
 					point[0] += this.x;
 					point[1] += this.y;
 					point[2] += this.z;
