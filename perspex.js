@@ -235,7 +235,7 @@
 				[cameraVector[0] + self.camera.eX,	cameraVector[1] - self.camera.eY,	cameraVector[2]],
 				[cameraVector[0] + self.camera.eX,	cameraVector[1] + self.camera.eY,	cameraVector[2]],
 				// This is somewhat arbitrary. Testing will confirm whether it is really necessary, or whether the values need tweaking.
-				[cameraVector[0] - (self.camera.eX * 2), cameraVector[1] + (self.camera.eY * 2), cameraVector[2]]
+				[cameraVector[0] - (self.camera.eX * 2), cameraVector[1] + (self.camera.eY * 2), cameraVector[2]],
 				[cameraVector[0],cameraVector[1],cameraVector[2]]
 			];
 			
