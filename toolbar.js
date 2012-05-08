@@ -21,8 +21,8 @@
 				width			 = "100%";
 			}
 			
-			var controls = [];
-			var cameraProperties = [
+			self.controls = {};
+			self.cameraProperties = [
 				["cX","X Pos"],
 				["cY","Y Pos"],
 				["cZ","Z Pos"],
@@ -34,7 +34,7 @@
 				["eZ","View Depth"]
 			];
 			
-			cameraProperties.forEach(function(property) {
+			self.cameraProperties.forEach(function(property) {
 				var tmpControlGroup = document.createElement("div");
 				var tmpControlLabel = document.createElement("label");
 				var tmpControlInput = document.createElement("input");
@@ -72,11 +72,9 @@
 				tmpControlGroup.appendChild(tmpControlLabel);
 				tmpControlGroup.appendChild(tmpControlInput);
 				self.toolbar.appendChild(tmpControlGroup);
-			});
-			
-			function updateControls() {
 				
-			}
+				self.controls[property[0]] = tmpControlInput;
+			});
 		} else {
 			throw new Error("You must pass in a perspex camera.");
 		}
@@ -93,6 +91,13 @@
 			if (camera instanceof perspex.Camera) {
 				this.boundCamera = camera;
 			}
+		},
+		
+		"update": function() {
+			var self = this;
+			self.cameraProperties.forEach(function(property) {
+				self.controls[property[0]].value = self.boundCamera[property[0]];
+			});
 		},
 		
 		"on": function(event,callback) {
