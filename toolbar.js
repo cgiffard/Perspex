@@ -1,7 +1,7 @@
 // In-browser toolbar for steering a perspex projection's camera.
 (function (glob) {
 	
-	function Toolbar(camera) {
+	var Toolbar = function(camera) {
 		var self = this;
 		if (perspex && camera instanceof perspex.Camera) {
 			self.events = {"update":function(){}};
@@ -44,7 +44,7 @@
 				tmpControlGroup.style.paddingLeft = "10px";
 				tmpControlGroup.style.display = "inline-block";
 				
-				tmpControlInput.type = "number";
+				tmpControlInput.setAttribute("type","number");
 				tmpControlInput.value = self.boundCamera[property[0]];
 				tmpControlInput.step = "1";
 				tmpControlInput.id = "camval" + property[0];
@@ -113,7 +113,5 @@
 		}
 	}
 	
-	
-	
-	window.PerspexToolbar = Toolbar;
-})();
+	glob.PerspexToolbar = Toolbar;
+})(this);
