@@ -1,0 +1,24 @@
+{
+  "name": "perspex",
+  "version": "0.0.1",
+  "description": "3D to 2D point projector",
+  "main": "perspex.js",
+  "scripts": {
+    "test": "mocha -R spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/cgiffard/Perspex.git"
+  },
+  "keywords": [
+    "perspex",
+    "projection",
+    "projector",
+    "3d",
+    "point",
+    "points",
+    "2d"
+  ],
+  "author": "Christopher Giffard <christopher.giffard@cgiffard.com>",
+  "license": "BSD"
+}
