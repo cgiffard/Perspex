@@ -121,8 +121,8 @@
 		// Finds the camera vector based on its location and pupil dimensions.
 		getVector: function() {
 			return [
-				this.cX + this.eX,
-				this.cY + this.eY,
+				this.cX,
+				this.cY,
 				this.cZ
 			];
 		},
@@ -137,15 +137,19 @@
 			
 			if (useClosestPoint) {
 				// Comparing based on closest point in polygon.
-				var closestPointDistance = Infinity;
+				var closestPointDistance = Infinity,
+					pointArrayLength = pointArray.length,
+					point, pointDistanceCalc = 0;
 				
-				pointArray.forEach(function(point) {
-					var pointDistance = self.distanceTo(point);
-					if (pointDistance < closestPointDistance) {
-						closestPointDistance = pointDistance;
+				for (var pointIndex = 0; pointIndex < pointArrayLength; pointIndex ++) {
+					point = pointArray[pointIndex];
+					pointDistanceCalc = self.distanceTo(point);
+					
+					if (pointDistanceCalc < closestPointDistance) {
+						closestPointDistance = pointDistanceCalc;
 						comparisonPoint = point;
 					}
-				});
+				}
 				
 			} else {
 				// Comparing based on polygon average/midpoint (NOT centroid)
@@ -212,23 +216,54 @@
 			
 			// At least one part of the polygon projects to the display surface.
 			if (self.onscreen(pointArray,viewWidth,viewHeight)) {
-				var cameraVector = self.camera.getVector(),
-					surfaceNormal = self.findNormal(pointArray);
-					
-				surfaceNormal = rotateX(surfaceNormal,self.camera.Θx);
-				surfaceNormal = rotateY(surfaceNormal,self.camera.Θy);
-				surfaceNormal = rotateZ(surfaceNormal,self.camera.Θz);
-			
-				var dotProduct = [
-					(surfaceNormal[0] * cameraVector[0]) +
-					(surfaceNormal[1] * cameraVector[1]) +
-					(surfaceNormal[2] * cameraVector[2])
-				];
-			
-				return dotProduct > 0;
+				return !self.cullBackface(pointArray);
 			}
 			
 			return false;
+		},
+		
+		// Determines whether a polygon should be drawn, based on whether it faces the camera.
+		// (Backface visibility culling)
+		cullBackface: function(pointArray) {
+			var self = this,
+				cameraVector = self.camera.getVector(),
+				surfaceNormal = self.findNormal(pointArray);
+			
+			var cameraVectors = [
+				[cameraVector[0] - self.camera.eX,	cameraVector[1] - self.camera.eY,	cameraVector[2]],
+				[cameraVector[0] - self.camera.eX,	cameraVector[1] + self.camera.eY,	cameraVector[2]],
+				[cameraVector[0] + self.camera.eX,	cameraVector[1] - self.camera.eY,	cameraVector[2]],
+				[cameraVector[0] + self.camera.eX,	cameraVector[1] + self.camera.eY,	cameraVector[2]],
+				// This is somewhat arbitrary. Testing will confirm whether it is really necessary, or whether the values need tweaking.
+				[cameraVector[0] - (self.camera.eX * 2), cameraVector[1] + (self.camera.eY * 2), cameraVector[2]],
+				[cameraVector[0],cameraVector[1],cameraVector[2]]
+			];
+			
+			// Because of our variable pupil size, we need to run the calculation four/five times
+			// (for each of our four pupil extremes)
+			var isBackface = true,
+				cameraVectorsLength = cameraVectors.length,
+				cameraVectorIndex;
+			
+			for (vectorIndex = 0; vectorIndex < cameraVectorsLength; vectorIndex++) {
+				if (self.facesVector(surfaceNormal,cameraVectors[vectorIndex])) {
+					isBackface = false;
+					break;
+				}
+			}
+			
+			return isBackface;
+		},
+		
+		// Determines whether a polygon (described by a normal) faces an arbitrary vector.
+		facesVector: function(surfaceNormal,vector) {
+			var dotProduct = [
+				(surfaceNormal[0] * vector[0]) +
+				(surfaceNormal[1] * vector[1]) +
+				(surfaceNormal[2] * vector[2])
+			];
+			
+			return dotProduct > 0;
 		},
 		
 		// Determines, from an array of points and the render area dimensions,
@@ -258,35 +293,40 @@
 		findNormal: function(pointArray) {
 			
 			// Newell's Normal Calculation Method (http://www.opengl.org/wiki/Calculating_a_Surface_Normal)
-			var normal = [0,0,0];
+			var normal = [0,0,0],
+				pointArrayLength = pointArray.length;
 			
-			pointArray.forEach(function(point,index) {
-				var current = point,
+			for (var index = 0; index < pointArrayLength; index ++) {
+				var point = pointArray[index],
+					current = point,
 					next = pointArray[(index + 1) % pointArray.length];
 					
 				normal[0] += ((current[1] - next[1]) * (current[2] + next[2]));
 				normal[1] += ((current[2] - next[2]) * (current[0] + next[0]));
 				normal[2] += ((current[0] - next[0]) * (current[1] + next[1]));
-			});
+			}
 			
 			// Normalise vector
 			var vectorLength = Math.sqrt(Math.pow(normal[0],2) + Math.pow(normal[1],2) + Math.pow(normal[2],2));
-			normal = normal.map(function (component) {
-				return component / vectorLength;
-			});
+			normal[0] /= vectorLength;
+			normal[1] /= vectorLength;
+			normal[2] /= vectorLength;
 			
 			return normal;
 		},
 		
 		// Finds the middle/average from an arbitrary array of points.
 		findMidpoint: function(pointArray) {
-			var midpoint = [0,0,0];
+			var midpoint = [0,0,0],
+				pointArrayLength = pointArray.length;
 			
-			pointArray.forEach(function(point) {
+			for (var pointIndex = 0; pointIndex < pointArrayLength; pointIndex ++) {
+				var point = pointArray[pointIndex];
+				
 				midpoint[0] += point[0] / pointArray.length;
 				midpoint[1] += point[1] / pointArray.length;
 				midpoint[2] += point[2] / pointArray.length;
-			});
+			}
 			
 			return midpoint;
 		}

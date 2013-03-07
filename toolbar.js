@@ -1,7 +1,7 @@
 // In-browser toolbar for steering a perspex projection's camera.
 (function (glob) {
 	
-	function Toolbar(camera) {
+	var Toolbar = function(camera) {
 		var self = this;
 		if (perspex && camera instanceof perspex.Camera) {
 			self.events = {"update":function(){}};
@@ -21,8 +21,8 @@
 				width			 = "100%";
 			}
 			
-			var controls = [];
-			var cameraProperties = [
+			self.controls = {};
+			self.cameraProperties = [
 				["cX","X Pos"],
 				["cY","Y Pos"],
 				["cZ","Z Pos"],
@@ -34,7 +34,7 @@
 				["eZ","View Depth"]
 			];
 			
-			cameraProperties.forEach(function(property) {
+			self.cameraProperties.forEach(function(property) {
 				var tmpControlGroup = document.createElement("div");
 				var tmpControlLabel = document.createElement("label");
 				var tmpControlInput = document.createElement("input");
@@ -44,7 +44,7 @@
 				tmpControlGroup.style.paddingLeft = "10px";
 				tmpControlGroup.style.display = "inline-block";
 				
-				tmpControlInput.type = "number";
+				tmpControlInput.setAttribute("type","number");
 				tmpControlInput.value = self.boundCamera[property[0]];
 				tmpControlInput.step = "1";
 				tmpControlInput.id = "camval" + property[0];
@@ -72,11 +72,9 @@
 				tmpControlGroup.appendChild(tmpControlLabel);
 				tmpControlGroup.appendChild(tmpControlInput);
 				self.toolbar.appendChild(tmpControlGroup);
-			});
-			
-			function updateControls() {
 				
-			}
+				self.controls[property[0]] = tmpControlInput;
+			});
 		} else {
 			throw new Error("You must pass in a perspex camera.");
 		}
@@ -95,6 +93,13 @@
 			}
 		},
 		
+		"update": function() {
+			var self = this;
+			self.cameraProperties.forEach(function(property) {
+				self.controls[property[0]].value = self.boundCamera[property[0]];
+			});
+		},
+		
 		"on": function(event,callback) {
 			if (event in this.events) {
 				if (callback instanceof Function) {
@@ -108,7 +113,5 @@
 		}
 	}
 	
-	
-	
-	window.PerspexToolbar = Toolbar;
-})();
+	glob.PerspexToolbar = Toolbar;
+})(this);
